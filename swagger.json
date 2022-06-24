@@ -1,0 +1,174 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0",
+    "title": "TFM API"
+  },
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/getFiles": {
+      "get": {
+        "summary": "Returns data from pod",
+        "description": "Makes a query to the SOLID pod of the user in order to comply with a Right of access request. ",
+        "operationId": "getQuery",
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "webID",
+            "in": "header",
+            "description": "The WebId of the user making the Right of access petition.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "catPData",
+            "in": "query",
+            "description": "The categories of data that the user making the Right of access petition wants to know.",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "purPData",
+            "in": "query",
+            "description": "The purposes of data that the user making the Right of access petition wants to know.",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/RightOfAccess"
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "WebId not found"
+          }
+        },
+        "x-swagger-router-controller": "Default"
+      }
+    }
+  },
+  "definitions": {
+    "RightOfAccess": {
+      "type": "object",
+      "properties": {
+        "processed": {
+          "type": "string",
+          "description": "Confirmation as to whether data about the person is processed or not."
+        },
+        "format": {
+          "type": "object",
+          "description": "Access to information about the processing, such as purpose,categories of data and recipients, duration of the processing, data subjects’ rights and appropriate safeguards in case of third country transfers.",
+          "properties": {
+            "dataSubjectRights": {
+              "type": "string",
+              "description": "Description of the rights of the user."
+            },
+            "safeguards": {
+              "type": "string",
+              "description": "Description of the safeguards during data transferences to third countries."
+            },
+            "resource": {
+              "type": "array",
+              "description": "List of resources of data.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name  of the resource."
+                  },
+                  "uri": {
+                    "type": "string",
+                    "description": "Uri of the resource."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Category of the data used."
+                  },
+                  "policies": {
+                    "type": "array",
+                    "description": "List of purposses and actions of data.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "polName": {
+                          "type": "string",
+                          "description": "Name of the policy used."
+                        },
+                        "purpose": {
+                          "type": "array",
+                          "description": "Purposes of the data.",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "action": {
+                          "type": "array",
+                          "description": "permissions of the policy.",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "recipients": {
+                    "type": "string",
+                    "description": "List of recipients of the data."
+                  },
+                  "duration": {
+                    "type": "string",
+                    "description": "Duration of the processment of the data."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "example": {
+        "processed": "True",
+        "format": {
+          "dataItem": [
+            {
+              "name": "",
+              "uri": "",
+              "purpose": "",
+              "recipients": "",
+              "duration": 1
+            },
+            {
+              "name": "",
+              "uri": "",
+              "purpose": "",
+              "recipients": "",
+              "duration": 2
+            }
+          ],
+          "dataSubjectRight": "",
+          "safeguards": ""
+        }
+      }
+    }
+  }
+}
