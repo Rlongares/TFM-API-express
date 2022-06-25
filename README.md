@@ -15,7 +15,7 @@ swagger-ui-express
 
 To start the API use the command node index.js
 
-In order to  log in: [localhost](http://localhost:8000/login)
+In order to  log in: http://localhost:8000/login
 
 Once logged in you can use the TFM-Frontend in order to make querys.
 
