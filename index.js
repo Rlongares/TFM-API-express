@@ -119,8 +119,8 @@ app.get("/redirect-from-solid-idp", async (req, res) => {
 });
 
 /**
- * Returns data from pod
- * Makes a query to the SOLID pod of the user in order to comply with a Right of access request.
+ * Returns data from Pod
+ * Makes a query to the Solid Pod of the user in order to comply with a Right of access request.
  *
  * webID String The WebId of the user making the Right of access petition.
  * catPData List The categories of data that the user making the Right of access petition wants to know.
@@ -335,7 +335,7 @@ app.get("/getFiles", async (req, res, next) => {
            categories: targetDataURL[categoryIndex].split("#").pop(),
            policies: [],
            recipients:[], //await getAgentAccessAll(personalDataFilesList[pdfl]),
-           duration: "For as long as it is on the pod under a policy."
+           duration: "For as long as it is on the Pod under a policy."
         };
         if(resourceToAdd.recipients.length > 0 ){
           processing = true;

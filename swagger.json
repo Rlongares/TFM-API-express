@@ -11,8 +11,8 @@
   "paths": {
     "/getFiles": {
       "get": {
-        "summary": "Returns data from pod",
-        "description": "Makes a query to the SOLID pod of the user in order to comply with a Right of access request. ",
+        "summary": "Returns data from Pod",
+        "description": "Makes a query to the Solid Pod of the user in order to comply with a Right of access request. ",
         "operationId": "getQuery",
         "produces": [
           "application/xml",
@@ -77,7 +77,7 @@
         },
         "format": {
           "type": "object",
-          "description": "Access to information about the processing, such as purpose,categories of data and recipients, duration of the processing, data subjects’ rights and appropriate safeguards in case of third country transfers.",
+          "description": "Access to information about the processing, such as purpose, categories of data and recipients, duration of the processing, data subjects’ rights and appropriate safeguards in case of third country transfers.",
           "properties": {
             "dataSubjectRights": {
               "type": "string",
