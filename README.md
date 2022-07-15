@@ -1,6 +1,6 @@
 # TFM-API-express
  
- This project is being developed by me as part of my TFM project with the objective of 
+ This project is being developed by me as part of my TFM project with the objective of providing an API to interact with an Inrupt pod in order to answer to Right of Access petitions.
  
 # Libraries Used
 @inrupt/solid-client-authn-node <br>
