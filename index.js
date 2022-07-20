@@ -24,11 +24,16 @@ const cookieSession = require("cookie-session");
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
 var cors = require('cors')
-//var app = require('connect')();
+const rdflib = require('rdflib');
+
 const app = express();
 const port = 8000;
 var processing = false;
 
+
+
+const ODRL2 = new rdflib.Namespace("http://www.w3.org/ns/odrl/2/");
+const DPV = new rdflib.Namespace("https://w3id.org/dpv#");
 
 
 function insertSpaces(string) {
@@ -294,6 +299,13 @@ app.get("/getFiles", async (req, res, next) => {
     console.log("POLICY PROHIBITION LIST: ")
     console.log(policyListProhibition);
 
+    //We obtain all consents
+    const consentContainer = podRoot+'private/consent/';
+
+    const consentDataset = await getSolidDataset(consentContainer, { fetch: sessionid.fetch });
+    const consentList = getContainedResourceUrlAll(consentDataset, { fetch: sessionid.fetch });
+    console.log("CONSENT LIST: ")
+    console.log(consentList);
 
     //Start getting list of files to give back.
 
@@ -329,6 +341,11 @@ app.get("/getFiles", async (req, res, next) => {
             }
           }
         console.log(urlList);
+
+        //We create the list of recipients for the current file
+        var recipientsList = [];
+
+
         var resourceToAdd = {
            name: personalDataFilesList[pdfl],
            uri: urlList,
@@ -337,9 +354,7 @@ app.get("/getFiles", async (req, res, next) => {
            recipients:[], //await getAgentAccessAll(personalDataFilesList[pdfl]),
            duration: "For as long as it is on the Pod under a policy."
         };
-        if(resourceToAdd.recipients.length > 0 ){
-          processing = true;
-        }
+
         //We deal with the policies that add permissions.
 
         for (var i = 0; i < policyListPermission.length; i++){
@@ -373,6 +388,36 @@ app.get("/getFiles", async (req, res, next) => {
               policy.action = actionData2;
               console.log(policy);
               resourceToAdd.policies.push(policy);
+
+
+              //Here we check whether there is a container that matches in policy with the permission policies of the current file.
+              for(var j = 0; j< consentList.length; j++){
+                console.log("Showing consent contents for ");
+                console.log(consentList[j]);
+                const consent =  await (await getFile(consentList[j], { fetch: sessionid.fetch  } )).text();
+                const store  = rdflib.graph();
+                var uri = consentList[j];
+                var mimeType = 'text/turtle'
+                try {
+                await  rdflib.parse(consent, store, uri, mimeType);
+
+                store.statementsMatching( undefined, ODRL2('hasPolicy'), undefined).forEach(st => {
+                  console.log(st.object.value);
+                  console.log(policyListPermission[i]);
+                  console.log(st.object.value.includes(policyListPermission[i]));
+                  if(st.object.value.includes(policyListPermission[i])){
+                      store.statementsMatching( undefined, DPV('hasRecipient'), undefined).forEach(st => {
+                        console.log(st.object.value);
+                        recipientsList.push(st.object.value);
+                          });
+                  }
+                });
+                } catch (err) {
+                    console.log(err)
+                }
+
+
+              }
             }
 
         }
@@ -409,57 +454,46 @@ app.get("/getFiles", async (req, res, next) => {
               policy.action = actionData2;
               console.log(policy);
               resourceToAdd.policies.push(policy);
+
+              //Here we check whether there is a container that matches in policy with the prohibition policies of the current file.
+              for(var j = 0; j< consentList.length; j++){
+                console.log("Showing consent contents for ");
+                console.log(consentList[j]);
+                const consent =  await (await getFile(consentList[j], { fetch: sessionid.fetch  } )).text();
+                const store  = rdflib.graph();
+                var uri = consentList[j];
+                var mimeType = 'text/turtle'
+                try {
+                await  rdflib.parse(consent, store, uri, mimeType);
+
+                store.statementsMatching( undefined, ODRL2('hasPolicy'), undefined).forEach(st => {
+                  console.log(st.object.value);
+                  console.log(policyListProhibition[i]);
+                  console.log(st.object.value.includes(policyListProhibition[i]));
+                  if(st.object.value.includes(policyListProhibition[i])){
+                      store.statementsMatching( undefined, DPV('hasRecipient'), undefined).forEach(st => {
+                        console.log(st.object.value);
+                        recipientsList.push(st.object.value);
+                          });
+                  }
+                });
+                } catch (err) {
+                    console.log(err)
+                }
+
+
+              }
             }
 
         }
-      /*
-        for (var i = 0; i < policyListProhibition.length; i++){
 
-          const policyProhibition = await getSolidDataset( policyListProhibition[i], { fetch: sessionid.fetch });
-          const policyProhibitionThing = `${policyListProhibition[i]}#prohibition1`;
-          const thing = getThing( policyProhibition, policyProhibitionThing);
-          const targetDataPolicy = getUrlAll(thing, ODRL.target);
-          const purposeConstraintThing = `${policyListProhibition[i]}#purposeConstraint`;
-          const purposeThing = getThing( policyProhibition, purposeConstraintThing);
-          const purposeData = getUrlAll(purposeThing, ODRL.rightOperand);
-          const actionData = getUrlAll(thing, ODRL.action);
-
-          // get category of data targeted by the policy
-          console.log("get category of data targeted by the prohibition policy.");
-
-
-          const element = targetDataPolicy[0].substring(targetDataPolicy[0].lastIndexOf("/") + 1);
-          console.log(purposeData);
-          for (var j = 0; j < resourceToAdd.policies.length; j++) {
-            console.log("Entered for: "+j);
-            console.log("Target del archivo: " +targetDataURL[0].split("#").pop());
-            console.log("Target de la policy: " +targetDataPolicy[0].substring(targetDataPolicy[0].lastIndexOf("/") + 1) );
-            console.log(targetDataURL[0].split("#").pop() == targetDataPolicy[0].substring(targetDataPolicy[0].lastIndexOf("/") + 1));
-            console.log(getParent(myJsonCat,targetDataURL[0].split("#").pop()).parents.includes(targetDataPolicy[0].substring(targetDataPolicy[0].lastIndexOf("/") + 1)));
-            //Comprobamos si las categorias de los archivos son iguales
-            if((targetDataURL[0].split("#").pop() ==  targetDataPolicy[0].substring(targetDataPolicy[0].lastIndexOf("/") + 1)) || getParent(myJsonCat,targetDataURL[0].split("#").pop()).parents.includes(targetDataPolicy[0].substring(targetDataPolicy[0].lastIndexOf("/") + 1))){
-              console.log("Categories are the same so we check for something prohibited here." + j);
-
-              //console.log(resourceToAdd.policies[j].purpose);
-              //console.log(resourceToAdd.policies[j].purpose.split("#").pop());
-              //console.log(getParent(myJsonPur,resourceToAdd.policies[j].purpose.split("#").pop()));
-              if(purposeData.some((e) => resourceToAdd.policies[j].purpose.includes(e) || getParent(myJsonPur,resourceToAdd.policies[j].purpose.split("#").pop()).parents.includes(e.split("#").pop()) )  ){
-
-                console.log("We have something prohibited here.");
-                console.log(resourceToAdd.policies[j].action);
-                console.log(actionData);
-                resourceToAdd.policies[j].action = resourceToAdd.policies[j].action.split(",").filter(val => !actionData.includes(val)).toString();
-                console.log(resourceToAdd.policies[j].action);
-            }
-          }
-
-        }
-        console.log("Out of " + j +" policy");
-      }
-      */
-
+        console.log(recipientsList);
+        resourceToAdd.recipients = recipientsList;
         if(resourceToAdd.policies.length > 0 ){
           console.log(resourceToAdd);
+          if(resourceToAdd.recipients.length > 0 ){
+            result.processed = true;
+          }
           result.format.resource.push(resourceToAdd);
         }
       }
