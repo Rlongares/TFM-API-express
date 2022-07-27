@@ -96,10 +96,10 @@ app.get("/login", async (req, res, next) => {
     // appended as query parameters:
     redirectUrl: `http://localhost:${port}/redirect-from-solid-idp`,
     // Set to the user's Solid Identity Provider; e.g., "https://broker.pod.inrupt.com"
-    oidcIssuer: "https://broker.pod.inrupt.com",
+    oidcIssuer: "https://login.inrupt.com",
     // Pick an application name that will be shown when asked
     // to approve the application's access to the requested data.
-    clientName: "TFM api",
+    clientName: "TFM API",
     handleRedirect: redirectToSolidIdentityProvider,
   });
 });
@@ -169,6 +169,8 @@ app.get("/getFiles", async (req, res, next) => {
     try{
     //Obtain root of the pod
     let podRoot = "";
+
+
     await getPodUrlAll(webID).then(response => {
          podRoot = response[0];
       });
@@ -182,6 +184,7 @@ app.get("/getFiles", async (req, res, next) => {
     console.log(policiesContainer);
 
     const policyDataset = await getSolidDataset(policiesContainer, { fetch: sessionid.fetch });
+
     const policyList = getContainedResourceUrlAll(policyDataset, { fetch: sessionid.fetch });
     console.log(policyList);
 
@@ -313,18 +316,33 @@ app.get("/getFiles", async (req, res, next) => {
 
     //Going through each file to see with which policies it identifies.
     for (var pdfl = 0; pdfl< personalDataFilesList.length;pdfl++){
+
       var personalDataFile = await getFile( personalDataFilesList[pdfl], { fetch: sessionid.fetch });
+
       if(!isRawData(personalDataFile)){
 
         personalDataFile = await getSolidDataset( personalDataFilesList[pdfl], { fetch: sessionid.fetch });
 
         const personalDataFileThing = getThing(personalDataFile, personalDataFilesList[pdfl]);
 
-        const targetDataURL = getUrlAll(personalDataFileThing, RDF.type);
+        let targetDataURL = [];
+
+        if(personalDataFileThing != null){
+
+           targetDataURL = getUrlAll(personalDataFileThing, RDF.type);
+
+        }
+        console.log(personalDataFilesList[pdfl]);
+        console.log(personalDataFileThing);
+        console.log(targetDataURL);
+
 
         const categoryIndex = targetDataURL.findIndex(element => element.includes("dpv"));
 
+
         if(categoryIndex > -1){
+          console.log(8);
+
         console.log("TargetDataURl \n" + targetDataURL);
         console.log(targetDataURL[categoryIndex].split("#").pop());
         console.log("Creando resource to add "+personalDataFilesList[pdfl] );
@@ -389,7 +407,7 @@ app.get("/getFiles", async (req, res, next) => {
               console.log(policy);
               resourceToAdd.policies.push(policy);
 
-
+              console.log("Checking consents.");
               //Here we check whether there is a container that matches in policy with the permission policies of the current file.
               for(var j = 0; j< consentList.length; j++){
                 console.log("Showing consent contents for ");
@@ -455,7 +473,8 @@ app.get("/getFiles", async (req, res, next) => {
               console.log(policy);
               resourceToAdd.policies.push(policy);
 
-              //Here we check whether there is a container that matches in policy with the prohibition policies of the current file.
+              console.log("Checking consents.");
+              //Here we check whether there is a consent that matches in policy with the prohibition policies of the current file.
               for(var j = 0; j< consentList.length; j++){
                 console.log("Showing consent contents for ");
                 console.log(consentList[j]);
@@ -464,6 +483,7 @@ app.get("/getFiles", async (req, res, next) => {
                 var uri = consentList[j];
                 var mimeType = 'text/turtle'
                 try {
+
                 await  rdflib.parse(consent, store, uri, mimeType);
 
                 store.statementsMatching( undefined, ODRL2('hasPolicy'), undefined).forEach(st => {
